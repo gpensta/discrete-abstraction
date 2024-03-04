@@ -1,0 +1,19 @@
+function [A, B, W] = get_multistep_w(fn, S, U)
+    x0 = S.center;
+    u0 = U.center;
+    n = size(x0, 1);
+    m = size(u0, 1);
+    s_temp = S.interval();
+    u_temp = U.interval();
+    x_sym = sym('x', [n, 1], 'real');
+    u_sym = sym('u', [m, 1], 'real');
+    f_sym = fn(x_sym, u_sym);
+    A_sym = jacobian(f_sym, x_sym);
+    B_sym = jacobian(f_sym, u_sym);
+    A = double(subs(A_sym, [x_sym; u_sym], [x0; u0]));
+    B = double(subs(B_sym, [x_sym; u_sym], [x0; u0]));
+    diff = @(x) fn(x(1:n), x(n+1:n + m)) - (fn(x0, u0) + A * (x(1:n) - x0) + B * (x(n+1:n + m) - u0));
+    D = interval([s_temp.inf; u_temp.inf]', [s_temp.sup; u_temp.sup]');
+    tay = taylm(D, 10, 'x','linQuad');
+    W = interval(diff(tay'));
+end
