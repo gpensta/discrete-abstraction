@@ -1,11 +1,14 @@
-fn = @(x, u_list) apply_fn_iteratively(x, u_list);
-
 g = -9.81;
 l = 1;
 beta = 1; 
 m = 1; 
 dt = .1;
-num_steps = 3;
+
+f = @(x, u) [x(1) + dt * x(2); 
+             x(2) + dt * (-g/l*sin(x(1)) - beta/(m*l^2)*x(2) + u)];
+
+fn = @(x, u_list) apply_fn_iteratively(f, x, u_list);
+
 
 x_prime = fn([0.; 0.], [6, 6]);
 

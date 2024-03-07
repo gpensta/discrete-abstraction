@@ -71,12 +71,6 @@ disp(alpha_max);
 disp("epsilon_opt");
 disp(epsilon_opt);
 
-
-
-
-
-
-
 function [alpha_max, epsilon_opt, K] = get_alpha_max(c, A, B, delta)
     n = size(A, 1);
     m = size(B, 2);
