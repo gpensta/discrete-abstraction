@@ -9,7 +9,7 @@ clear;
 x0 = [-.5; 0.5]; % Exemple, à remplacer par vos valeurs
 
 % Définition de plusieurs états initiaux x0
-x0s = (2* rand(5, 2) - 1* ones(5, 2))'; % Chaque colonne est un état initial différent
+x0s = ((1 - (-1)) * rand(5, 2) - 1* ones(5, 2))'; % Chaque colonne est un état initial différent
 x0s = [x0s [0; 0]];
 % Nombre de pas de temps à simuler
 N = 25;
