@@ -6,13 +6,11 @@ addpath('./functions')
 % Vanderpol oscillator 
 % Dimensions of state domain : (x1, x2) \in [-1, 1]^2, inputs \in [-1, 1]. 
 
-
 %% *************************** Dynamics ***********************************
 
 % f_u =  @(t,x,u)(-[ -2*x(2,:) ; 0.8*x(1,:) + 10*x(1,:).^2.*x(2,:) - 2*x(2,:) + u] );
 % n = 2;
 % m = 1; % number of control inputs
-
 
 %% ************************** Discretization ******************************
 
@@ -58,8 +56,8 @@ addpath('./functions')
 delta = 10;
 c = 0.9;         
 num_steps = 5;
-deltaT = 0.05; % Pas de temps pour la discrétisation
-ss_sup = 1.;
+deltaT = 0.04; % Pas de temps pour la discrétisation
+ss_sup = 1.5;
 
 % A_s = eye(2);
 % B_s = [];
@@ -94,14 +92,6 @@ for i = 1:size(x,1)
 %             disp("f");
 %         end
         u_star = 0;  
-%         % Matrices A et B linéarisées évaluées au point d'équilibre
-%         A = [0, 2; -0.8 - 20*x_star(1)*x_star(2), 2 - 10*x_star(1)^2];
-%         B = [0; 1];
-%         % Utilisation de la fonction c2d pour obtenir les matrices discrètes A_d et B_d
-%         sys = ss(A, B, eye(size(A)), 0); % Création d'un système d'état-space continu ss(A, B, C, D)
-%         sys_d = c2d(sys, deltaT, 'zoh'); % Discrétisation du système
-%         A_d = sys_d.A;
-%         B_d = sys_d.B;
         [A_d, B_d] = get_A_B_vdp(x_star, u_star, deltaT);
         A_s = eye(2);
         B_s = [];
@@ -145,26 +135,19 @@ disp(epsilon_star);
 % disp(col);
 
 [minVal, linearInd] = min(epsilons(:));
-% Convertir l'indice linéaire en indices de souscription
-% [row, col] = ind2sub(size(epsilons), linearInd);
-
-% disp("row, col, epsilon");
-% disp(row);
-% disp(col);
 
 % Disturbances
 
-
-[x, y] = meshgrid(-ss_sup:2 * ss_sup / 6 :ss_sup, -ss_sup:2 * ss_sup / 6 :ss_sup);
-w_rad = zeros(size(x));
-for i = 1:size(x,1)
-    for j = 1:size(x,2)
-        x_star = [x(i,j); y(i,j)]; % Comme dans le papier
-        W = get_W_vdp(x_star, epsilon_star, delta, deltaT, num_steps);
-        w_rad(i, j) = .5 * (W.sup(2) -  W.inf(2)); % pq 2 ? 
-%         disp(W.center);
-    end
-end
+% [x, y] = meshgrid(-ss_sup:2 * ss_sup / 6 :ss_sup, -ss_sup:2 * ss_sup / 6 :ss_sup);
+% w_rad = zeros(size(x));
+% for i = 1:size(x,1)
+%     for j = 1:size(x,2)
+%         x_star = [x(i,j); y(i,j)]; % Comme dans le papier
+%         W = get_W_vdp(x_star, epsilon_star, delta, deltaT, num_steps);
+%         w_rad(i, j) = .5 * (W.sup(2) -  W.inf(2)); % pq 2 ? 
+% %         disp(W.center);
+%     end
+% end
 
 % figure;
 % surf(x, y, ws);
@@ -173,17 +156,17 @@ end
 % zlabel('W')
 
 
-% Trouver le minimum et son indice dans la matrice
-[max_w_rad, linearInd] = max(w_rad(:));
-% Convertir l'indice linéaire en indices de souscription
-% [row, col] = ind2sub(size(alphas), linearInd);
-
-disp("max_w_rad");
-disp(max_w_rad);
-disp("max_w_rad / alpha_star");
-disp(max_w_rad / alpha_star);
-
-alpha_star = alpha_star - max_w_rad;
+% % Trouver le minimum et son indice dans la matrice
+% [max_w_rad, linearInd] = max(w_rad(:));
+% % Convertir l'indice linéaire en indices de souscription
+% % [row, col] = ind2sub(size(alphas), linearInd);
+% 
+% % disp("max_w_rad");
+% % disp(max_w_rad);
+% % disp("max_w_rad / alpha_star");
+% % disp(max_w_rad / alpha_star);
+% 
+alpha_star = 0.5 * alpha_star;
 
 
 
@@ -212,43 +195,6 @@ end
 
 disp("Sanity check passed");
 
-
-
-
-%% alpha_max comme une fonction de ss
-
-
-% for i = 1:size(x, 1)
-%     for j = 1:size(x, 2)
-%         % Matrices A et B linéarisées évaluées au point d'équilibre
-%         x_star = [x(i,j); y(i,j)];
-%         A = [0, 2; -0.8 - 20*x_star(1)*x_star(2), 2 - 10*x_star(1)^2];
-%         B = [0; 1];
-%         deltaT = 0.025; % Pas de temps pour la discrétisation
-% 
-%         % Utilisation de la fonction c2d pour obtenir les matrices discrètes A_d et B_d
-%         sys = ss(A, B, eye(size(A)), 0); % Création d'un système d'état-space continu ss(A, B, C, D)
-%         sys_d = c2d(sys, deltaT, 'zoh'); % Discrétisation du système
-% 
-%         % Extraction des matrices A_d et B_d du système discrétisé
-%         A_d = sys_d.A;
-%         B_d = sys_d.B;
-%         
-%         A_s = eye(2);
-%         B_s = [];
-%         for k  = 1:num_steps
-%             A_s = A_s * A_d;
-%             B_s = [A_d^(k-1) * B_d B_s];
-%         end
-%         alphas = zeros(size(x));
-%         [alpha, epsilon, K] = get_alpha_max(c, A_s, B_s, delta);
-%         alphas(i, j) = alpha; 
-%     end
-% end
-
-
-
-
 %% ********************    Construction du graphviz  **********************************
 % 
 grid_step = 2 * alpha_star; % alpha = + grande dis entre pt et grid_pt, au pire diag / 2 = alpha , alpha = sqrt(2) / 2 grid_step...
@@ -262,7 +208,7 @@ disp("size(G)");
 disp(size(G));
 
 
-if (size(G, 1) < 900)
+if (size(G, 1) < 700)
 
     % disp("interval(ref_zonotope).sup")
     % disp(interval(ref_zonotope).sup)
@@ -274,7 +220,7 @@ if (size(G, 1) < 900)
             A_s = eye(2);
             B_s = [];
             for k  = 1:num_steps
-                A_s = A_s * A_d;
+                A_s = A_s * A_d; 
                 B_s = [A_d^(k-1) * B_d B_s];
             end
 
@@ -285,7 +231,8 @@ if (size(G, 1) < 900)
             
 %             W = get_W_vdp(x0, epsilon_star, delta, deltaT, num_steps);
 %             wc = W.center;
-            Fw = A_s * x0 + 1 * B_s * ref_zonotope + zonotope([0; 0], alpha_star * [0 1; 1 0]);  
+
+            Fw = A_s * x0 + 0.025 * B_s * ref_zonotope + zonotope([0; 0], alpha_star * [0 1; 1 0]);  
 
             % Une fois l'équation A* Ball(eps) + B Ball(beta) \subset B(eps - alpha)
             % ||A|| eps + ||B|| beta + w <= eps - alpha ~> 
@@ -340,36 +287,6 @@ else
     disp("Graph is too big (> 900 x 900)")
 end
 
-
-
-%% ********************    One step Reach **********************************
-
-% n = 2; % Dimensions of the state space
-% 
-% 
-% S = zonotope(zeros(n, 1), epsilon * eye(n));
-% U = zonotope(zeros(num_steps, 1), delta * eye(num_steps));
-% 
-% 
-% % linearization_area = A_s * zonotope(zeros(n, 1), epsilon_opt * eye(n)) + B_s * zonotope(zeros(num_steps, 1), delta * eye(num_steps));
-% 
-% 
-% f = @(x, u) [x(1) + deltaT * 2 * x(2); 
-%              x(2) + deltaT * (-.8 * x(1) + 2 * x(2) - 10 * x(1) * x(1) * x(2) + u)];
-%          
-% 
-% fn = @(x, u_list) apply_fn_iteratively(f, x, ones(num_steps, 1));
-%     
-% [A, B, W] = get_multistep_w(fn, S, U);
-
-
-% diff = @(x) fn(x(1:n), x(n+1:n + m)) - (fn(x0, u0) + A * (x(1:n) - x0) + B * (x(n+1:n + m) - u0));
-% D = interval([s_temp.inf; u_temp.inf]', [s_temp.sup; u_temp.sup]');
-% tay = taylm(D, 10, 'x','linQuad');
-% W = interval(diff(tay'));
-
-% W = get_W_vdp([-ss_sup + rand() * 2 * ss_sup; ss_sup + rand() * 2 * ss_sup], epsilon, delta, deltaT, num_steps);
-% disp(W.volume);
 %% Compute disturbances
 
 % Meshgrid sur le state-space.
@@ -417,7 +334,8 @@ function W = get_W_vdp(x_star, epsilon, delta, deltaT, num_steps)
 end
 
 function [A_d, B_d] = get_A_B_vdp(x_star, u_star, deltaT)
-    A = [0, 2; -0.8 - 20*x_star(1)*x_star(2), 2 - 10*x_star(1)^2];
+    A = [0, 2; -0.8 - 5*x_star(1)*x_star(2), 2 - 2.5*x_star(1)^2];
+%      A = [0, 2; -0.8 - 20*x_star(1)*x_star(2), 2 - 10*x_star(1)^2];
     B = [0; 1];
     % Utilisation de la fonction c2d pour obtenir les matrices discrètes A_d et B_d
     sys = ss(A, B, eye(size(A)), 0); % Création d'un système d'état-space continu ss(A, B, C, D)
@@ -473,6 +391,3 @@ function K = get_K(A, B, epsilon, alpha, delta, c)
         disp('Le problème n’a pas de solution.');
     end
 end
-
-
-
