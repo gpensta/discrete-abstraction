@@ -390,4 +390,3 @@ function K = get_K(A, B, epsilon, alpha, delta, c)
         K = []; % Pas de solution trouvée
         disp('Le problème n’a pas de solution.');
     end
-end
